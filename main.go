@@ -1,5 +1,4 @@
-// A program that takes ld as the first argument and silences the annoying FPC warning
-
+// ldfpcfix silences the annoying warning in /usr/bin/ld
 package main
 
 import (
@@ -9,50 +8,51 @@ import (
 	"os"
 )
 
+const (
+	inFilename  = "/usr/bin/ld"
+	outFilename = "/usr/bin/ld"
+)
+
 var (
-	wd = []byte("%P: warning: %s contains output sections")
+	warningMessage = []byte("%P: warning: %s contains output sections")
 )
 
 func main() {
-	in_filename := "/usr/bin/ld"
-	out_filename := "/usr/bin/ld"
-
 	// Read the input filename
-	data, err := ioutil.ReadFile(in_filename)
+	data, err := ioutil.ReadFile(inFilename)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
 	// Check if ld has already been patched
-	if !bytes.Contains(data, wd) {
-		fmt.Println(in_filename, "has already been patched")
+	if !bytes.Contains(data, warningMessage) {
+		fmt.Println(inFilename, "has already been patched")
 		os.Exit(1)
 		return
 	}
+
 	// Find the position of the warning
-	pos := bytes.Index(data, wd)
+	pos := bytes.Index(data, warningMessage)
 
 	// Patch it
 	data[pos] = 0 // Silence the message with a 0 byte
 
 	// Get the permissions of the original file
-	fi, err := os.Stat(in_filename)
+	fi, err := os.Stat(inFilename)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	perm := fi.Mode().Perm()
 
-	fmt.Printf("Patching %s... ", out_filename)
-
 	// Write the patched data to the new file, but with the same permissions as the original file
-	err = ioutil.WriteFile(out_filename, data, perm)
+	fmt.Printf("Patching %s... ", outFilename)
+	err = ioutil.WriteFile(outFilename, data, perm)
 	if err != nil {
 		fmt.Println("fail")
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 	fmt.Println("ok")
 }
