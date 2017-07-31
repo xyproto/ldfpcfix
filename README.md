@@ -31,4 +31,4 @@ It's not pretty, but it works. Don't use it if you don't like it.
 
 Licensed under GPL2.
 
-Download the precompiled binary for 64-bit Linux [here]().
+Download the precompiled binary for 64-bit Linux [here](https://github.com/xyproto/ldfpcfix/releases/download/v1.0/ldfpcfix-1.0.tar.gz).
