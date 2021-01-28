@@ -1,4 +1,3 @@
-// ldfpcfix silences the annoying warning in /usr/bin/ld
 package main
 
 import (
@@ -12,7 +11,6 @@ import (
 // If the string is found in the file, the first byte is
 // set to 0, to make the string zero length in C.
 func patchAway(filename, cstring string) error {
-	// Read the input filename
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return err
@@ -41,10 +39,8 @@ func patchAway(filename, cstring string) error {
 }
 
 func main() {
-	const (
-		filename       = "/usr/bin/ld"
-		warningMessage = "%P: warning: %s contains output sections"
-	)
+	filename := "/usr/bin/ld"
+	warningMessage := "%P: warning: %s contains output sections"
 	fmt.Printf("Patching %s... ", filename)
 	if err := patchAway(filename, warningMessage); err != nil {
 		fmt.Fprintln(os.Stderr, err)
