@@ -8,50 +8,46 @@ import (
 	"os"
 )
 
-const (
-	inFilename  = "/usr/bin/ld"
-	outFilename = "/usr/bin/ld"
-)
-
-var (
-	warningMessage = []byte("%P: warning: %s contains output sections")
-)
-
-func main() {
+// patchAway takes a filename and a string
+// If the string is found in the file, the first byte is
+// set to 0, to make the string zero length in C.
+func patchAway(filename, cstring string) error {
 	// Read the input filename
-	data, err := ioutil.ReadFile(inFilename)
+	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	// Check if ld has already been patched
-	if !bytes.Contains(data, warningMessage) {
-		fmt.Println(inFilename, "has already been patched")
-		os.Exit(1)
-		return
+		return err
 	}
 
 	// Find the position of the warning
-	pos := bytes.Index(data, warningMessage)
+	pos := bytes.Index(data, []byte(cstring))
 
-	// Patch it
-	data[pos] = 0 // Silence the message with a 0 byte
+	// If it does not exist, the file has most likely already been patched
+	if pos == -1 {
+		return fmt.Errorf("%s has already been patched", filename)
+	}
 
-	// Get the permissions of the original file
-	fi, err := os.Stat(inFilename)
+	// Silence the message with a 0 byte
+	data[pos] = 0
+
+	// Retrieve the permissions of the original file
+	fi, err := os.Stat(filename)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	perm := fi.Mode().Perm()
 
 	// Write the patched data to the new file, but with the same permissions as the original file
-	fmt.Printf("Patching %s... ", outFilename)
-	err = ioutil.WriteFile(outFilename, data, perm)
-	if err != nil {
-		fmt.Println("fail")
-		fmt.Println(err)
+	return ioutil.WriteFile(filename, data, perm)
+}
+
+func main() {
+	const (
+		filename       = "/usr/bin/ld"
+		warningMessage = "%P: warning: %s contains output sections"
+	)
+	fmt.Printf("Patching %s... ", filename)
+	if err := patchAway(filename, warningMessage); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	fmt.Println("ok")
